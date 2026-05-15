@@ -3,7 +3,6 @@ package burp;
 import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.io.File;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JCheckBox;
@@ -29,10 +28,14 @@ class Config {
 	private boolean exploitMode;
 	private boolean completeFileGuessSitemap;
 	private boolean completeFileGuessWordlist;
-	private File fileNameWordlist;
-	private File fileExtWordlist;
+	private boolean tildeGuessEnabled;
+	private String fileNameWordlistSource;
+	private String fileExtWordlistSource;
 
-	public Config(HashMap<String, JTextField> confFields, JTextPane requestEditor, JTextField nThreadsField, JCheckBox exploitModeCheckbox, JCheckBox completeFileGuessSitemapCheckbox, JCheckBox completeFileGuessWordlistCheckbox) {
+	public Config(HashMap<String, JTextField> confFields, JTextPane requestEditor, JTextField nThreadsField,
+				  JCheckBox exploitModeCheckbox, JCheckBox completeFileGuessSitemapCheckbox,
+				  JCheckBox completeFileGuessWordlistCheckbox, JCheckBox tildeGuessCheckbox,
+				  WordlistPicker fileNamePicker, WordlistPicker fileExtPicker) {
 		this.magicFinalPartList = Arrays.asList(confFields.get("magicFinalPartList").getText().split(","));
 		this.questionMarkSymbol = confFields.get("questionMarkSymbol").getText();
 		this.asteriskSymbol = confFields.get("asteriskSymbol").getText();
@@ -53,8 +56,9 @@ class Config {
 		this.exploitMode = exploitModeCheckbox.isSelected();
 		this.completeFileGuessSitemap = completeFileGuessSitemapCheckbox.isSelected();
 		this.completeFileGuessWordlist = completeFileGuessWordlistCheckbox.isSelected();
-		this.fileNameWordlist = new File(confFields.get("fileNameWordlist").getText());
-		this.fileExtWordlist = new File(confFields.get("fileExtWordlist").getText());
+		this.tildeGuessEnabled = tildeGuessCheckbox != null && tildeGuessCheckbox.isSelected();
+		this.fileNameWordlistSource = fileNamePicker == null ? "" : fileNamePicker.getSelected();
+		this.fileExtWordlistSource = fileExtPicker == null ? "" : fileExtPicker.getSelected();
 	}
 
 	public List<String> getMagicFinalPartList() {
@@ -137,12 +141,20 @@ class Config {
 		return completeFileGuessWordlist;
 	}
 
-	public File getFileNameWordlist() {
-		return fileNameWordlist;
+	public boolean getTildeGuessEnabled() {
+		return tildeGuessEnabled;
 	}
 
-	public File getFileExtWordlist() {
-		return fileExtWordlist;
+	/**
+	 * Raw wordlist source — either a {@code bundled:NAME} id for shipped resources
+	 * or a filesystem path. Pass through {@link WordlistLoader} to materialize.
+	 */
+	public String getFileNameWordlistSource() {
+		return fileNameWordlistSource;
+	}
+
+	public String getFileExtWordlistSource() {
+		return fileExtWordlistSource;
 	}
 
 	public void setQuestionMarkSymbol(String questionMarkSymbol) {

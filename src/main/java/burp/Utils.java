@@ -58,6 +58,49 @@ class Utils {
 		return elements;
 	}
 
+	/**
+	 * Build the candidate wordlist for the current scan results and write it
+	 * to a user-chosen file. Returns the count of unique candidates written,
+	 * or -1 if the user cancelled or no results exist.
+	 *
+	 * <p>This is the {@code --dict-only / --dict-output} equivalent from the
+	 * upstream Python {@code tilde_enum.py} — emit a flat list one entry per
+	 * line, ready for {@code ffuf -w}, {@code feroxbuster -w}, {@code gobuster -w}.
+	 */
+	public static int exportDictionary(IBurpExtenderCallbacks callbacks, JTextField targetUrlField,
+										  java.util.List<String> filesFound, java.util.List<String> dirsFound,
+										  String fileNameWordlistSource, String fileExtWordlistSource,
+										  boolean enableTildeGuess) {
+		java.util.List<DictionaryGenerator.ShortName> shortNames =
+				DictionaryGenerator.fromBruteforcerResults(filesFound, dirsFound);
+		if (shortNames.isEmpty()) return -1;
+
+		java.util.List<String> dict = WordlistLoader.load(fileNameWordlistSource);
+		java.util.List<String> exts = WordlistLoader.load(fileExtWordlistSource);
+		java.util.List<String> generated = DictionaryGenerator.generate(shortNames, dict, exts, enableTildeGuess);
+		if (generated.isEmpty()) return -1;
+
+		String suggested = "iis_tilde_wordlist_" +
+				targetUrlField.getText().replace("http://", "").replace("https://", "")
+						.replace("/", "-").split("\\?")[0] +
+				"_" + Long.toString(System.currentTimeMillis() / 1000L) + ".txt";
+
+		final JFileChooser fc = new JFileChooser();
+		fc.setSelectedFile(new File(suggested));
+		if (fc.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) return -1;
+
+		try (FileOutputStream fos = new FileOutputStream(fc.getSelectedFile())) {
+			StringBuilder sb = new StringBuilder();
+			for (String line : generated) sb.append(line).append('\n');
+			fos.write(sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		} catch (IOException e) {
+			PrintWriter stderr = new PrintWriter(callbacks.getStderr(), true);
+			e.printStackTrace(stderr);
+			return -1;
+		}
+		return generated.size();
+	}
+
 	// function to save text output from a text pane to a file
 	public static void saveOutputToFile(IBurpExtenderCallbacks callbacks, JTextPane textPane, JTextField targetUrlField) {
 		// get output content

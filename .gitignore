@@ -1,0 +1,19 @@
+# Gradle build artifacts
+.gradle/
+build/
+gradle-8.6-bin/
+
+# IntelliJ / Eclipse
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+bin/
+
+# OS noise
+.DS_Store
+Thumbs.db

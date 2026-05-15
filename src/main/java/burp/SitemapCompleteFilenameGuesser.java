@@ -11,6 +11,7 @@ class SitemapCompleteFilenameGuesser extends Thread implements IIntruderPayloadG
 	private List<String> filesFound;
 	private List<String> dirsFound;
 	private String targetUrl;
+	private Output output;
 
 	public SitemapCompleteFilenameGuesser(List<String> dirsFound, List<String> filesFound, String targetUrl, IBurpExtenderCallbacks callbacks) {
 		this.callbacks = callbacks;
@@ -39,7 +40,6 @@ class SitemapCompleteFilenameGuesser extends Thread implements IIntruderPayloadG
 		List<String> elementsFound = Utils.buildElementList(dirsFound, filesFound);
 		List<String> possibleFileNames = new ArrayList<String>();
 		List<String> possibleFileExts = new ArrayList<String>();
-
 		// iterate through sitemap to get URL paths
 		for (IHttpRequestResponse requestResponse : sitemap) {
 			String urlPath = callbacks.getHelpers().analyzeRequest(requestResponse).getUrl().getPath();

@@ -29,6 +29,19 @@ class TildeEnumerationScanner extends Thread {
 	private long startScanTime;
 	private long startBruteTime;
 
+	/** Read-only access to the bruteforce results, or empty list if no scan has run / completed. */
+	public java.util.List<String> getFilesFound() {
+		return bruteforcer == null ? java.util.Collections.emptyList() : bruteforcer.getFilesFound();
+	}
+
+	public java.util.List<String> getDirsFound() {
+		return bruteforcer == null ? java.util.Collections.emptyList() : bruteforcer.getDirsFound();
+	}
+
+	public Config getConfig() {
+		return config;
+	}
+
 	public TildeEnumerationScanner(String targetUrl, Config config, Output output, JButton scanButton, IBurpExtenderCallbacks callbacks) {
 		this.targetUrl = targetUrl;
 		this.config = config;
@@ -159,10 +172,11 @@ class TildeEnumerationScanner extends Thread {
 				throw new InterruptedException("[X] Error: short name extensions can start with 3 characters maximum");
 			}
 
-			// checking for complete filename guessing wordlist files existence (if complete filename wordlist guessing is enabled)
+			// checking for complete filename guessing wordlist resolvability (bundled: or file path)
 			if (config.getCompleteFileGuessWordlist()) {
-				if (!config.getFileNameWordlist().exists() || !config.getFileExtWordlist().exists()) {
-					throw new InterruptedException("[X] Error: Wordlist-based complete filename guessing requires a wordlist of file names and a wordlist for file extensions, the provided wordlist files do not exist");
+				if (WordlistLoader.load(config.getFileNameWordlistSource()).isEmpty()
+						|| WordlistLoader.load(config.getFileExtWordlistSource()).isEmpty()) {
+					throw new InterruptedException("[X] Error: Wordlist-based complete filename guessing requires usable filename and extension wordlists. Use bundled:big / bundled:extensions or supply a real file path.");
 				}
 			}
 
@@ -338,6 +352,9 @@ class TildeEnumerationScanner extends Thread {
 					Utils.sendToIntruder(callbacks, config.getRequestString(), requester.getHttpService().getHost(), requester.getBasePath(), requester.getHttpService().getPort(), requester.getHttpService().getProtocol().equals("https"));
 
 					output.print("[+] Generated " + sitemapFileNameGuesser.getPayloads().size() + " possible complete filenames from sitemap, switch to Intruder to launch a guessing attack using the generated filenames");
+					for(String payload : sitemapFileNameGuesser.getPayloads()) {
+						output.print(payload);
+					}
 				}
 			}
 
@@ -347,7 +364,7 @@ class TildeEnumerationScanner extends Thread {
 				output.print("\n[*] Generating Intruder payload list for complete filename guessing using wordlists");
 
 				// initializing wordlist filename guesser and starting guessing
-				wordlistFileNameGuesser = new WordlistCompleteFilenameGuesser(bruteforcer.getDirsFound(), bruteforcer.getFilesFound(), config.getFileNameWordlist(), config.getFileExtWordlist());
+				wordlistFileNameGuesser = new WordlistCompleteFilenameGuesser(bruteforcer.getDirsFound(), bruteforcer.getFilesFound(), config.getFileNameWordlistSource(), config.getFileExtWordlistSource());
 				wordlistFileNameGuesser.start();
 
 				// waiting the wordlist filename guesser to finish
@@ -378,8 +395,11 @@ class TildeEnumerationScanner extends Thread {
 					// registering new wordlist filename guesser and sending tab to Intruder
 					callbacks.registerIntruderPayloadGeneratorFactory(wordlistFileNameGuesser);
 					Utils.sendToIntruder(callbacks, config.getRequestString(), requester.getHttpService().getHost(), requester.getBasePath(), requester.getHttpService().getPort(), requester.getHttpService().getProtocol().equals("https"));
-
+					
 					output.print("[+] Generated " + wordlistFileNameGuesser.getPayloads().size() + " possible complete filenames from wordlists, switch to Intruder to launch a guessing attack using the generated filenames");
+					for(String payload : wordlistFileNameGuesser.getPayloads()) {
+						output.print(payload);
+					}
 				}
 			}
 			// once finished, toggle scan/stop button and reset UI to ready to scan
