@@ -363,7 +363,7 @@ public class BurpExtender implements IBurpExtender, ITab {
         JPanel p = UiBuilders.titledSection("HTTP Request");
         int row = 0;
         UiBuilders.addLabeledRow(p, row++, "Request methods (comma-separated):", textField("requestMethods",
-                "OPTIONS,POST,DEBUG,TRACE,GET,HEAD", 30));
+                "OPTIONS,POST,DEBUG,TRACE,TRACK,GET,HEAD", 30));
         UiBuilders.addLabeledRow(p, row++, "URL suffix for error display:", textField("urlSuffix",
                 "?&aspxerrorpath=/", 30));
         UiBuilders.addLabeledRow(p, row++, "Delay between requests (ms):", textField("delay", "0", 8));

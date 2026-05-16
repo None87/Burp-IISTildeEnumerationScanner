@@ -37,7 +37,10 @@ A legacy alias task `./gradlew fatJar` still works.
 ![2](https://github.com/cyberaz0r/Burp-IISTildeEnumerationScanner/assets/35109470/a37d7488-d29c-40b6-9e53-b845476c8353)
 
 ## Changelog
-* v3.0 — UI overhaul
+* v3.0 — detection parity with Python + UI overhaul
+  * **TRACK** added to the default HTTP method list (manual scan + Active Scanner check). Some legacy IIS deployments leave TRACK enabled while disabling TRACE, and the upstream Python tool exercised TRACK but the original Java port omitted it.
+  * **Baseline 404 sanity probe** ported from Python's `initialCheckUrl`: before the vulnerability heuristic runs, fire one GET against a random `.htm` path and warn loudly in the scanner log when the server returns 200 (custom error page / SPA), 401/403 (auth wall), 3xx (captive portal), or 5xx. Body-diff detection is unreliable in those modes; the warning never aborts the scan but it tells the analyst whether to trust the results.
+
   * **Three-tab layout**: `Scanner` / `Fuzz Hits (n)` / `Configuration`. The Fuzz Hits tab title shows a live count.
   * **Scanner tab redesign**: toolbar (target URL + threads + Scan / Save / Export / Fuzz buttons) on top; horizontal split below with the live log on the left and a **discovered-short-names table** on the right that populates in real time (poll-based, ~500 ms cadence). Status bar with progress bar at the bottom.
   * **Color-coded log** in the log pane: hits (green), errors (red), phase status (blue), info (default).

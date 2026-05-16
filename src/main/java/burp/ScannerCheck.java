@@ -31,7 +31,7 @@ public class ScannerCheck implements IScannerCheck{
 
 		// looping through hardcoded request methods and magic final parts
 		for (String magicFinalPart : "/~1/.rem,/~1/,\\a.aspx,\\a.asp,/a.aspx,/a.asp,/a.shtml,/a.asmx,/a.ashx,/a.config,/a.php,/a.jpg,/webresource.axd,/a.xxx".split(",")) {
-			for (String requestMethod : "OPTIONS,POST,DEBUG,TRACE,GET,HEAD".split(",")) {
+			for (String requestMethod : "OPTIONS,POST,DEBUG,TRACE,TRACK,GET,HEAD".split(",")) {
 				String validName = basePath + "/" + Utils.urlEncode("*~1*" + magicFinalPart);
 				String invalidName = basePath + "/1234567890" + Utils.urlEncode("*~1*" + magicFinalPart);
 				String invalidDifferentName = basePath + "/0123456789" + Utils.urlEncode("*~1.*" + magicFinalPart);

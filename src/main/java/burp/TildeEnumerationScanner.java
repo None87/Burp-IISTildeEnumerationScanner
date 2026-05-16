@@ -186,6 +186,11 @@ class TildeEnumerationScanner extends Thread {
 			// initialize requester object
 			requester = new Requester(targetUrl + config.getUrlSuffix(), config.getDelay(), callbacks);
 
+			// baseline 404 sanity probe (mirrors Python tilde_enum.initialCheckUrl):
+			// if the target doesn't return 404 for a random .htm path the body-diff
+			// heuristic in isVulnerable() will produce unreliable results.
+			runBaselineProbe();
+
 			// initialize and start thread for checking if the host is vulnerable
 			vulnerableCheckThread = new Thread(isVulnerable());
 			vulnerableCheckThread.start();
@@ -461,6 +466,30 @@ class TildeEnumerationScanner extends Thread {
 				scanButton.setText("Scan");
 				scanButton.setEnabled(true);
 				break;
+		}
+	}
+
+	/** Pre-scan baseline probe. Warns but never aborts — analyst makes the call. */
+	private void runBaselineProbe() {
+		try {
+			Requester baselineRequester = new Requester(targetUrl, 0, callbacks);
+			String probeFilename = BaselineProbe.randomFilename();
+			String probePath = baselineRequester.getBasePath() + Utils.urlEncode(probeFilename);
+			IHttpRequestResponse rr = baselineRequester.httpRequestRaw(
+					config.getRequestString()
+							.replace("§METHOD§", "GET")
+							.replace("§PATH§", probePath)
+							.replace("\n", "\r\n"));
+			int status = (rr == null || rr.getResponse() == null) ? -1
+					: callbacks.getHelpers().analyzeResponse(rr.getResponse()).getStatusCode();
+			BaselineProbe.Result baseline = BaselineProbe.build(status, probeFilename);
+			if (baseline.verdict == BaselineProbe.Verdict.EXPECTED_404) {
+				output.print("[*] Baseline probe OK (random .htm returned 404)");
+			} else {
+				output.print(baseline.message());
+			}
+		} catch (RuntimeException e) {
+			output.print("[!] Baseline probe failed (" + e.getMessage() + ") — proceeding anyway");
 		}
 	}
 
